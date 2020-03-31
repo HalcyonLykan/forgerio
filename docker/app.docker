@@ -1,0 +1,57 @@
+FROM php:7.3.8-fpm-stretch
+
+ENV MEMCACHED_DEPS zlib-dev libmemcached-dev cyrus-sasl-dev
+
+RUN apt-get update && apt-get install -y libmemcached-dev libc-client-dev libkrb5-dev sudo git curl libxml2-dev libcurl4-gnutls-dev libmcrypt-dev mysql-client openssh-client zlib1g-dev ssh unzip cron libicu-dev vim g++ gcc libpcre3-dev make git pkgconf re2c zlib1g-dev wget mc libzip-dev acl && docker-php-ext-install pdo_mysql zip intl curl bcmath soap xml mbstring
+
+RUN export EDITOR="/usr/bin/vim"
+
+RUN echo "LC_ALL=en_US.UTF-8" >> /etc/default/locale
+
+RUN curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+
+RUN apt-get update
+
+RUN apt-get update
+RUN apt-get install -y nodejs
+RUN npm install -g npm
+RUN npm install -g gulp-cli
+RUN npm install -g bower
+RUN npm install -g yarn
+RUN npm install -g grunt-cli
+
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+#RUN php -r "if (hash_file('SHA384', 'composer-setup.php') === '669656bab3166a7aff8a7506b8cb2d1c292f042046c5a994c43155c0be6190fa0355160742ab2e1c88d40d5be660b410') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+RUN php composer-setup.php
+RUN php -r "unlink('composer-setup.php');"
+
+RUN mv composer.phar /usr/local/bin/composer
+
+RUN docker-php-ext-configure calendar && docker-php-ext-install calendar
+
+# Install GD
+RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+RUN docker-php-ext-install gd exif
+
+RUN docker-php-ext-configure imap --with-kerberos --with-imap-ssl
+RUN docker-php-ext-install imap
+
+RUN pecl install memcached igbinary xdebug-2.7.1 && docker-php-ext-enable xdebug && docker-php-ext-enable igbinary && docker-php-ext-enable memcached
+RUN yes | pecl install -f redis-5.0.0 && docker-php-ext-enable redis
+#&& echo "zend_extension=$(find /usr/local/lib/php/extensions/ -name xdebug.so)" > /usr/local/etc/php/conf.d/xdebug.ini && echo "xdebug.remote_enable=on" >> /usr/local/etc/php/conf.d/xdebug.ini && echo "xdebug.remote_autostart=off" >> /usr/local/etc/php/conf.d/xdebug.ini
+
+#RUN docker-php-ext-configure opcache --enable-opcache && docker-php-ext-install opcache
+#RUN sed -i "s/#START=yes/START=yes/" /etc/default/beanstalkd
+#RUN /etc/init.d/beanstalkd start
+
+#Custom php stuff
+ADD ./docker/php.ini /usr/local/etc/php/conf.d/php.ini
+#ADD ./docker/z-fpm.conf /usr/local/etc/php-fpm.d/z-fpm.conf
+#ADD ./docker/app.init.sh /root/app.init.sh
+#CMD ["bash", "chmod +x /root/app.init.sh"]
+#CMD ["bash", "/root/app.init.sh"]
+
+#RUN echo "* * * * * root php /var/www/artisan schedule:run >> /dev/null 2>&1" >> /etc/crontab
+
+WORKDIR /var/www

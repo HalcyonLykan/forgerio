@@ -1,0 +1,51 @@
+version: '2'
+services:
+    web:
+        build:
+            context: ./
+            dockerfile: docker/web.docker
+        volumes:
+            - ./:/var/www
+        ports:
+            - "8081:80"
+    app:
+        build:
+            context: ./
+            dockerfile: docker/app.docker
+        volumes:
+            - ./:/var/www
+        environment:
+            - "XDEBUG_CONFIG=remote_host=10.0.75.1"
+        ports:
+            - "9000"
+            - "6001:6001"
+    mysql:
+        build:
+            context: ./
+            dockerfile: docker/mysql.docker
+        environment:
+        - "MYSQL_ROOT_PASSWORD=root"
+        - "MYSQL_DATABASE=laravel"
+        ports:
+        - "33061:3306"
+        volumes:
+        - ./mysql:/var/lib/mysql
+    redis:
+        image: redis:5.0
+        ports:
+        - "6379:6379"
+    # laravel-echo-server:
+    #     image: oanhnn/laravel-echo-server:v2.0.0
+    #     environment:
+    #         LARAVEL_ECHO_SERVER_AUTH_HOST:  'http://localhost:8081'
+    #         LARAVEL_ECHO_SERVER_HOST:       null
+    #         LARAVEL_ECHO_SERVER_PORT:       6001
+    #         LARAVEL_ECHO_SERVER_DEBUG:      'false'
+    #         REDIS_HOST:                     redis
+    #         REDIS_PORT:                     6379
+    #         REDIS_DB_BACKEND:               0
+    #     ports: 
+    #     - "6001:6001"
+    #     volumes:
+    #     - ./:/app
+

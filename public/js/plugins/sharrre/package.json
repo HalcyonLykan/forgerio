@@ -1,0 +1,50 @@
+{
+  "_from": "sharrre@^2.0.1",
+  "_id": "sharrre@2.0.1",
+  "_inBundle": false,
+  "_integrity": "sha512-DK/CDfzBIOjIB/NKjiagm3NdAkRpj0n0rU4l0GcI3Pls5ouB1gLhIno4ADCRL6r8OArDRs+6xRkoHNuwNEnNdg==",
+  "_location": "/sharrre",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "sharrre@^2.0.1",
+    "name": "sharrre",
+    "escapedName": "sharrre",
+    "rawSpec": "^2.0.1",
+    "saveSpec": null,
+    "fetchSpec": "^2.0.1"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/sharrre/-/sharrre-2.0.1.tgz",
+  "_shasum": "0a626bfa957fb369283010256956eca3c7ad7e49",
+  "_spec": "sharrre@^2.0.1",
+  "_where": "/var/www",
+  "author": {
+    "name": "Julien Hany"
+  },
+  "bugs": {
+    "url": "https://github.com/Julienh/Sharrre/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "Make your sharing widget! Sharrre is a jQuery plugin that allows you to create nice widgets sharing for Facebook, Twitter, Google Plus (with PHP script) and more.",
+  "devDependencies": {
+    "bower": "",
+    "grunt": "",
+    "grunt-cli": "",
+    "grunt-contrib-copy": "",
+    "grunt-contrib-uglify": "",
+    "grunt-contrib-watch": "",
+    "grunt-sass": ""
+  },
+  "homepage": "https://github.com/Julienh/Sharrre#readme",
+  "name": "sharrre",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Julienh/Sharrre.git"
+  },
+  "version": "2.0.1"
+}
