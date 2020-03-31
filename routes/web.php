@@ -30,9 +30,7 @@ Route::prefix('gameRoom'/* .'s' */)->group(function () {
 	
 	/*  
 	Route::get('/{gameRoom?}', 'GameRoomController@show');
-	Route::post('/{gameRoom?}/chat', 'GameRoomController@chatEvent');
-	Route::post('/{gameRoom?}/line', 'GameRoomController@canvasEvent');
-	
+	Route::post('/{gameRoom?}/*', 'GameRoomController@*Event');
 	*/
 	
 	Route::get('/', 'GameRoomController@show');
@@ -40,6 +38,7 @@ Route::prefix('gameRoom'/* .'s' */)->group(function () {
 	Route::post('/chat', 'GameRoomController@chatEvent');
 	Route::post('/line', 'GameRoomController@canvasEvent');
 	Route::post('/joined', 'GameRoomController@joinedEvent');
+	Route::post('/left', 'GameRoomController@leftEvent');
 	Route::post('/round', 'GameRoomController@roundEvent');
 	Route::post('/askSync', 'GameRoomController@askSyncEvent');
 	Route::post('/toSync', 'GameRoomController@syncEvent');

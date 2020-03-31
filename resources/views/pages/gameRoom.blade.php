@@ -8,7 +8,7 @@
     <div class="col-8">
       <div class="card card-nav-tabs text-center">
         <div id="timerWord" class="card-header card-header-primary">
-          [TIMER] [WORD]
+          Loading
         </div>
         <div class="card-body">
           <div class="col-12" style="max-height:711px; height:711px;">

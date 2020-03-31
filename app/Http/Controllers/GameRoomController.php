@@ -27,8 +27,6 @@ class GameRoomController extends Controller
         return view('pages.gameList');
     }
 
-
-
     /**
      * Show the form for creating a new resource.
      *

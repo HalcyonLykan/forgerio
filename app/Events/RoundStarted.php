@@ -6,24 +6,22 @@ use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class Left implements ShouldBroadcastNow
+class RoundStarted
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-    
-    public $broadcastName;
 
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($name)
+    public function __construct()
     {
-        $this->broadcastName = $name;
+        //
     }
 
     /**
@@ -33,16 +31,6 @@ class Left implements ShouldBroadcastNow
      */
     public function broadcastOn()
     {
-        return new Channel('room');
-    }
-
-    public function broadcastWith()
-    {
-        return ['name' => $this->broadcastName];
-    }
-
-    public function broadcastAs()
-    {
-        return 'SomeoneLeft';
+        return new PrivateChannel('channel-name');
     }
 }

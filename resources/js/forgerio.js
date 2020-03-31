@@ -54,14 +54,11 @@ $(document).ready(function () {
         limit: 100,
         seconds: 0,
     };
-    var _timeinterval = setInterval(() => {
-        _time.seconds = _time.seconds - 1;
-        updateTimer();
-        if (_time.seconds == 0) {
-            timeUp();
-            resetInterval();
-        }
-    }, 1000)
+    var _timeinterval = null;
+
+    var _chatlog = [];
+    var _strokelog = [];
+    var _roundInProgress = false;
 
     var _usrs = [];
     var _guessed = [];
@@ -79,22 +76,23 @@ $(document).ready(function () {
         _usrs.push(_thisUser);
     }
 
-    $.ajax({
-        type: "post",
-        url: _location.origin + "/gameRoom/joined",
-        data: { name: _thisUser },
-        complete: function () {
-            setTimeout(() => {
-                if (window.location.pathname === '/gameRoom') {
+    if (window.location.pathname === '/gameRoom') {
+        $.ajax({
+            type: "post",
+            url: _location.origin + "/gameRoom/joined",
+            data: { name: _thisUser },
+            complete: function () {
+                setTimeout(() => {
                     if (_usrs.length == 1) {
+                        $('#timerWord').html('<button id="startRound" class="btn btn-primary btn-round" disabled="true">Round</button>')
                         _isDrawing = true;
-                        getWord();
-                        resetTimer();
                     }
-                }
-            }, 5000)
-        }
-    });
+                    else
+                    $('#timerWord').html('Round has not started');
+                }, 5000)
+            }
+        });
+    }
 
     // BEJGfAGejKPRGTy6VZ9aN85L
 
@@ -161,11 +159,14 @@ $(document).ready(function () {
         }).listen('.SomeoneJoined', (e) => {
             _usrs.push(e.name);
             cleanUsrs();
+            $('#startRound').attr('disabled', false);
+            $('#chatTextArea').html($('#chatTextArea').html() + e.name + ' joined\n')
             sync();
         }).listen('.SomeoneLeft', (e) => { //don't know if i can make this work
             _usrs = _usrs.filter(function (val, index) {
                 return val !== e.name;
             });
+            $('#chatTextArea').html($('#chatTextArea').html() + e.name + ' left\n')
             sync();
         }).listen('.SomeoneGuessed', (e) => {
             if (e.name == _thisUser) _alreadyGuessed = true;
@@ -195,6 +196,32 @@ $(document).ready(function () {
                 _word = e.data._word;
             }
         });
+
+    window.onbeforeunload = function (event) {
+        $.ajax({
+            type: "post",
+            url: _location.origin + "/gameRoom/left",
+            data: { name: _thisUser },
+            dataType: "json",
+        });
+        var message;
+        if (typeof event == 'undefined') {
+            event = window.event;
+        }
+        if (event) {
+            message = event.returnValue;
+        }
+        return message;
+    };
+
+    /* $(function () {
+        $("a").not('#lnkLogOut').click(function () {
+            window.onbeforeunload = null;
+        });
+        $(".btn").click(function () {
+            window.onbeforeunload = null;
+        });
+    }); */
 
     /* SERVER EVENT TRIGGERS */
     $('#sendText').click(function (e) {
@@ -229,6 +256,19 @@ $(document).ready(function () {
         $('#userName').removeClass('is-invalid');
         $('#nameError').remove();
     });
+
+    $('#startRound').click(() => {
+        getWord();
+        resetTimer();
+        _timeinterval = setInterval(() => {
+            _time.seconds = _time.seconds - 1;
+            updateTimer();
+            if (_time.seconds == 0) {
+                timeUp();
+                resetInterval();
+            }
+        }, 1000);
+    })
 
     /* REUSABLE FUNCS */
     function sendText() {
@@ -329,7 +369,7 @@ $(document).ready(function () {
             type: "post",
             url: _location.origin + "/gameRoom/timeUp",
             data: {
-                next: _usrs.indexOf(_thisUser) < _usrs.length ? _usrs.indexOf(_thisUser) : 0
+                next: _usrs.indexOf(_thisUser) < (_usrs.length - 1) ? _usrs.indexOf(_thisUser) : 0
             },
             dataType: "json"
         });
