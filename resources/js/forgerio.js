@@ -1,33 +1,9 @@
-function initPickColor() {
-    $('.pick-class-label').click(function () {
-        var new_class = $(this).attr('new-class');
-        var old_class = $('#display-buttons').attr('data-class');
-        var display_div = $('#display-buttons');
-        if (display_div.length) {
-            var display_buttons = display_div.find('.btn');
-            display_buttons.removeClass(old_class);
-            display_buttons.addClass(new_class);
-            display_div.attr('data-class', new_class);
-        }
-    });
-}
-
-/* function checkFullPageBackgroundImage() {
-    $page = $('.full-page');
-    image_src = $page.data('image');
-
-    if (image_src !== undefined) {
-        image_container = '<div class="full-page-background" style="background-image: url(' + image_src + ') "/>';
-        $page.append(image_container);
-    }
-} */
-
-/* function showNotification(from, align) {
+function showNotification(from, align) {
     color = 'primary';
 
     $.notify({
         icon: "nc-icon nc-bell-55",
-        message: "Welcome to <b>Paper Dashboard</b> - a beautiful bootstrap dashboard for every web developer."
+        message: "test test test"
 
     }, {
         type: color,
@@ -37,7 +13,7 @@ function initPickColor() {
             align: align
         }
     });
-} */
+}
 
 const Atrament = require('atrament');
 
@@ -84,11 +60,12 @@ $(document).ready(function () {
             complete: function () {
                 setTimeout(() => {
                     if (_usrs.length == 1) {
-                        $('#timerWord').html('<button id="startRound" class="btn btn-primary btn-round" disabled="true">Round</button>')
+                        $('#round').html('Start')
                         _isDrawing = true;
                     }
                     else
-                    $('#timerWord').html('Round has not started');
+                        $('#round').html('Waiting');
+                    // should disable buttons
                 }, 5000)
             }
         });
@@ -97,97 +74,157 @@ $(document).ready(function () {
     // BEJGfAGejKPRGTy6VZ9aN85L
 
     let sketchpad;
+    $('#sketchpad').width($('#sketchpadParent').width() - 20);
+    $(window).resize(function () {
+        $('#sketchpad').width($('#sketchpadParent').width() - 20);
+    });
     const canvas = document.querySelector('#sketchpad');
     if (canvas) {
-        sketchpad = new Atrament(canvas);
-        sketchpad.smoothing = 1.3;
-        sketchpad.adaptiveStroke = true;
+        sketchpad = new Atrament(canvas, {
+            width: $('#sketchpad').width(),
+            height: $('#sketchpad').height()
+        });
+        sketchpad.smoothing = 1.5;
+        sketchpad.adaptiveStroke = false;
+        // sketchpad.weight = 10;
         sketchpad.recordStrokes = true;
         sketchpad.addEventListener('clean', () => {
             if (_isDrawing)
                 sendClear();
         });
-        sketchpad.addEventListener('fillstart', ({ x, y }) => {
+        sketchpad.addEventListener('fillstart', (stroke/* { x, y } */) => {
             if (_isDrawing)
-                sendFill(x.y)
+                sendFill(stroke)
         });
         sketchpad.addEventListener('strokerecorded', function ({ stroke }) {
             if (_isDrawing)
                 sendLine(stroke)
         });
-    }
+    } // sketchpad doesn't resize very well
+
 
     /* DEBUGGING CONLOGS */
     var socketId = Echo.socketId();
     console.log('Socket ID: ', socketId);
     console.log(_location);
     setInterval(() => {
-        console.log("usrs: ", _usrs);
+        // console.log("usrs: ", _usrs);
         console.log("isdrawing: ", _isDrawing);
+        // console.log("sketchpad: ", sketchpad);
     }, 10000);
 
     /* SERVER CHANNELS AND EVENT HANDLERS */
     Echo.channel('laravel_database_room')
         .listen(".UpdateChat", (e) => {
-            console.log(e);
+            console.log('UPDATECHAT: ', e);
             $('#chatTextArea').html($('#chatTextArea').html() + e.name + ': ' + e.message + '\n')
-        }).listen('.UpdateCanvas', (e) => {
-            console.log("Updatecanvas: ", e);
-            if (socketId !== e.socket && _isDrawing == false) {
-                stroke = e[0];
-                sketchpad.mode = stroke.mode; //should rememeber old sketchpad settings
-                sketchpad.weight = parseFloat(stroke.weight);
-                sketchpad.smoothing = parseFloat(stroke.smoothing);
-                sketchpad.color = stroke.color;
-                sketchpad.adaptiveStroke = !!(stroke.adaptiveStroke);
+        }).listen('.UpdateCanvas', (e) => { //breaks if 2 people somehow end up drawing at the same time ?...
+            console.log("UPDATECANVAS: ", e);
+            switch (e['type']) {
+                case 'clear':
+                    sketchpad.clear();
+                    break;
+                case 'fill':
+                    if (socketId !== e.socket && _isDrawing == false) {
+                        stroke = e['data'];
+                        sketchpad.mode = 'fill';
+                        sketchpad.color = stroke.color;
+                        /* sketchpad.weight = 10;
+                        sketchpad.smoothing = 1.5; 
+                        sketchpad.adaptiveStroke = false; */
 
-                const points = stroke.points.slice();
-                const firstPoint = points.shift();
-                sketchpad.beginStroke(firstPoint.x, firstPoint.y);
+                        sketchpad.fill(stroke.x, stroke.y);
+                    }
+                    break;
+                case 'line':
+                    if (socketId !== e.socket && _isDrawing == false) {
+                        stroke = e['data'];
+                        sketchpad.mode = 'draw';
+                        sketchpad.color = stroke.color;
+                        /* sketchpad.weight = parseFloat(stroke.weight);
+                        sketchpad.smoothing = parseFloat(stroke.smoothing);
+                        sketchpad.adaptiveStroke = !!(stroke.adaptiveStroke); */
 
-                let prevPoint = firstPoint;
-                while (points.length > 0) {
-                    const point = points.shift();
-                    const { x, y } = sketchpad.draw(point.x, point.y, prevPoint.x, prevPoint.y)
-                    prevPoint = { x, y };
-                }
-
-                sketchpad.endStroke(prevPoint.x, prevPoint.y);
+                        const points = stroke.points.slice();
+                        const firstPoint = points.shift();
+                        let prevPoint = firstPoint;
+                        sketchpad.beginStroke(firstPoint.x, firstPoint.y);
+                        while (points.length > 0) {
+                            const point = points.shift();
+                            const { x, y } = sketchpad.draw(point.x, point.y, prevPoint.x, prevPoint.y)
+                            prevPoint = { x, y };
+                        }
+                        sketchpad.endStroke(prevPoint.x, prevPoint.y);
+                    }
+                    break;
+                default:
+                    break;
             }
         }).listen('.AskSync', (e) => {
             sync();
         }).listen('.SomeoneJoined', (e) => {
-            _usrs.push(e.name);
-            cleanUsrs();
-            $('#startRound').attr('disabled', false);
-            $('#chatTextArea').html($('#chatTextArea').html() + e.name + ' joined\n')
-            sync();
-        }).listen('.SomeoneLeft', (e) => { //don't know if i can make this work
-            _usrs = _usrs.filter(function (val, index) {
+            console.log('SOMEONEJOINED: ', e);
+            if (socketId !== e.socket) {
+                _usrs.push(e.name);
+                cleanUsrs();
+                $('#round').attr('disabled', false);
+                $('#chatTextArea').html($('#chatTextArea').html() + e.name + ' joined\n')
+                sync();
+            }
+        }).listen('.SomeoneLeft', (e) => {
+            console.log('SOMEONELEFT: ', e);
+            _usrs = _usrs.filter(function (val) {
                 return val !== e.name;
             });
+            if (_usrs.length == 1) {
+                $('#round').attr('disabled', true);
+            }
             $('#chatTextArea').html($('#chatTextArea').html() + e.name + ' left\n')
             sync();
         }).listen('.SomeoneGuessed', (e) => {
-            if (e.name == _thisUser) _alreadyGuessed = true;
-            if (_isDrawing) {
+            console.log('SOMEONEGUESSED: ', e);
+            $('#chatTextArea').html($('#chatTextArea').html() + e.name + ' guessed the word\n')
+            if (e.name != _thisUser && _isDrawing) {
                 _guessed.push(e.name);
-                if (_guessed.length == _usrs.length) {
+                if (_guessed.length == _usrs.length - 1) {
                     timeUp();
                 }
             }
         }).listen('.TimeUp', (e) => {
+            console.log('TIMEUP: ', e);
+            clearInterval(_timeinterval);
+            _timeinterval = null;
+            if (e.winners) {
+                if (e.winners.length = _usrs.length - 1)
+                    $('#chatTextArea').html($('#chatTextArea').html() + 'EVERYBODY WON\n');
+                else {
+                    $('#chatTextArea').html($('#chatTextArea').html() + 'WINNERS:\n');
+                    e.winners.forEach((el) => {
+                        $('#chatTextArea').html($('#chatTextArea').html() + el + '\n');
+                    });
+                }
+            }
+            else
+                $('#chatTextArea').html($('#chatTextArea').html() + 'Nobody won last round\n');
+
             _guessed = [];
             _isDrawing = _thisUser == _usrs[e.next];
+
             _alreadyGuessed = false;
-            resetTimer();
-            if (_isDrawing) {
-                getWord();
-                sync();
-            }
+            _roundInProgress = false;
+
+            disableSketch();
+
+            _isDrawing ? $('#round').html('START') : $('#round').html('WAITING');
+
+        }).listen('.Round', (e) => {
+            _roundInProgress = true;
+            resetInterval();
+            _timeinterval = setInterval(intervalfun, 1000);
+            $('#clear').click();
         }).listen('.Word', (e) => {
-            console.log('word: ', e);
             _word = e.word;
+            $('#clear').click();
         }).listen('.Sync', (e) => {
             if (_isDrawing == false) {
                 _usrs = e.data._usrs;
@@ -197,36 +234,21 @@ $(document).ready(function () {
             }
         });
 
-    window.onbeforeunload = function (event) {
+    window.onbeforeunload = function () {
         $.ajax({
             type: "post",
             url: _location.origin + "/gameRoom/left",
             data: { name: _thisUser },
             dataType: "json",
         });
-        var message;
-        if (typeof event == 'undefined') {
-            event = window.event;
+        if (_isDrawing) {
+            timeUp();
         }
-        if (event) {
-            message = event.returnValue;
-        }
-        return message;
-    };
-
-    /* $(function () {
-        $("a").not('#lnkLogOut').click(function () {
-            window.onbeforeunload = null;
-        });
-        $(".btn").click(function () {
-            window.onbeforeunload = null;
-        });
-    }); */
+    }; //doesn't catch all cases
 
     /* SERVER EVENT TRIGGERS */
     $('#sendText').click(function (e) {
         e.preventDefault();
-        _isDrawing = !_isDrawing;
         $('#chat_form').submit();
     });
 
@@ -257,22 +279,38 @@ $(document).ready(function () {
         $('#nameError').remove();
     });
 
-    $('#startRound').click(() => {
-        getWord();
-        resetTimer();
-        _timeinterval = setInterval(() => {
-            _time.seconds = _time.seconds - 1;
-            updateTimer();
-            if (_time.seconds == 0) {
-                timeUp();
-                resetInterval();
-            }
-        }, 1000);
+    $('#round').click(() => {
+        if (_roundInProgress == false && _isDrawing)
+            round()
+        else timeUp();
     })
+
+    $('#clear').click(() => {
+        if (_isDrawing)
+            sketchpad.clear();
+    })
+
+    $('#fill').click(() => {
+        if (_isDrawing)
+            sketchpad.mode = "fill";
+    })
+
+    $('#erase').click(() => {
+        if (_isDrawing)
+            sketchpad.mode = "erase";
+    })
+
+    $('#pencil').click(() => {
+        if (_isDrawing)
+            sketchpad.mode = "draw";
+    })
+
+    colorWell = document.querySelector("#html5colorpicker");
+    colorWell.addEventListener("change", changesketcpadcolor, false);
 
     /* REUSABLE FUNCS */
     function sendText() {
-        if ($('#textToSend').val().length >= 1 && $('#textToSend').val().substr(0, 1) !== ' ') {
+        if ($('#textToSend').val().trim().length >= 1) {
             checkGuess();
         }
     }
@@ -281,26 +319,49 @@ $(document).ready(function () {
         $.ajax({
             type: "post",
             url: _location.origin + "/gameRoom/line",
-            data: { line: stroke, name: _thisUser },
+            data: { type: 'line', data: stroke, name: _thisUser },
+            dataType: "json"
+        });
+    }
+
+    function sendFill(stroke) {
+        $.ajax({
+            type: "post",
+            url: _location.origin + "/gameRoom/line",
+            data: { type: 'fill', data: { x: stroke.x, y: stroke.y, color: sketchpad.color }, name: _thisUser },
+            dataType: "json"
+        });
+    }
+
+    function sendClear() {
+        $.ajax({
+            type: "post",
+            url: _location.origin + "/gameRoom/line",
+            data: { type: 'clear', data: null, name: _thisUser },
             dataType: "json"
         });
     }
 
     function checkGuess() {
-        if ($('#textToSend').val() == _word)
-            $.ajax({
-                type: "post",
-                url: _location.origin + "/gameRoom/guessed",
-                data: { name: _thisUser },
-                dataType: "json",
-            });
-        else
+        if ($('#textToSend').val().trim().toLowerCase() == _word.toLowerCase() && _isDrawing == false) {
+            if (_alreadyGuessed == false) {
+                _alreadyGuessed = true;
+                $.ajax({
+                    type: "post",
+                    url: _location.origin + "/gameRoom/guessed",
+                    data: { name: _thisUser },
+                    dataType: "json",
+                });
+            }
+        }
+        else if (_isDrawing == false)
             $.ajax({
                 type: "post",
                 url: _location.origin + "/gameRoom/chat",
                 data: { message: $('#textToSend').val(), name: _thisUser },
                 dataType: "json",
             });
+        $('#textToSend').val('');
     }
 
     function getWord() {
@@ -348,30 +409,92 @@ $(document).ready(function () {
             })
     }
 
-    function updateTimer() {
-        $('#timerWord').html(_time.seconds + ' ' + _word)
+    function intervalfun() {
+        _time.seconds = _time.seconds - 1;
+        updateTimer();
+        if (_time.seconds == 0) {
+            timeUp();
+            resetInterval();
+        }
     }
 
-    function resetTimer(desired = _time.limit) {
+    function updateTimer() {
+        $('#timer').html(_time.seconds);
+        if (_isDrawing)
+            $('#word').html(_word);
+        else {
+            var word = '';
+            i = 0;
+            while (i < _word.length) {
+                word = word + ' _';
+                i++;
+            }
+            $('#word').html(word);
+        }
+    }
+
+    /* function resetTimer(desired = _time.limit) {
         _time.seconds = desired
         updateTimer();
         resetInterval();
-    }
+    } */
 
     function resetInterval() {
         _time.seconds = _time.limit
     }
 
     function timeUp() {
-        _isDrawing = false;
-        _alreadyGuessed = false;
-        $.ajax({
-            type: "post",
-            url: _location.origin + "/gameRoom/timeUp",
-            data: {
-                next: _usrs.indexOf(_thisUser) < (_usrs.length - 1) ? _usrs.indexOf(_thisUser) : 0
-            },
-            dataType: "json"
-        });
+        if (_isDrawing)
+            $.ajax({
+                type: "post",
+                url: _location.origin + "/gameRoom/timeUp",
+                data: {
+                    next: (_usrs.indexOf(_thisUser) + 1) < _usrs.length ? _usrs.indexOf(_thisUser) + 1 : 0,
+                    guessed: _guessed
+                },
+                dataType: "json"
+            });
+    }
+
+    function round() {
+        if (_isDrawing) {
+            $('#round').html('STOP');
+            getWord();
+            sync();
+            enableSketch();
+            $.ajax({
+                type: "post",
+                url: _location.origin + "/gameRoom/round",
+                dataType: "json"
+            });
+        }
+    }
+
+    function enableSketch() {
+        $("#sketchpadParent").attr('style', 'max-height:686px; height:686px;');
+        $('#clear').attr('disabled', false);
+        $('#pencil').attr('disabled', false);
+        $('#erase').attr('disabled', false);
+        $('#fill').attr('disabled', false);
+        $('#html5colorpciker').attr('disabled', false);
+    }
+
+    function disableSketch() {
+        $("#sketchpadParent").attr('style', 'max-height:686px; height:686px; pointer-events: none;');
+        $('#round').html('START');
+        $('#timer').html('TIME');
+        $('#word').html('WORD');
+        $('#clear').attr('disabled', true);
+        $('#pencil').attr('disabled', true);
+        $('#erase').attr('disabled', true);
+        $('#fill').attr('disabled', true);
+        $('#html5colorpciker').attr('disabled', true);
+    }
+
+    function changesketcpadcolor(event) {
+        if (_isDrawing) {
+            sketchpad.color = event.target.value;
+        }
     }
 });
+

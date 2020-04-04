@@ -15,16 +15,17 @@ class UpdateCanvas implements ShouldBroadcastNow /* ShouldBroadcastNow */
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $broadcastLine, $broadcastName, $broadcastRoom;
+    public $broadcastType, $broadcastData, $broadcastName, $broadcastRoom;
 
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($line, $name, $room = null)
+    public function __construct($type, $data, $name, $room = null)
     {
-        $this->broadcastLine = $line;
+        $this->broadcastType = $type;
+        $this->broadcastData = $data;
         $this->broadcastRoom = $room;
         $this->broadcastName = $name;
     }
@@ -41,7 +42,7 @@ class UpdateCanvas implements ShouldBroadcastNow /* ShouldBroadcastNow */
 
     public function broadcastWith()
     {
-        return [ $this->broadcastLine, 'name' => $this->broadcastName];
+        return ['type' => $this->broadcastType, 'data' => $this->broadcastData, 'name' => $this->broadcastName];
     }
 
     public function broadcastAs()

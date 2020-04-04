@@ -14,16 +14,17 @@ class TimeUp implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $next;
+    public $next, $winners;
 
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($n)
+    public function __construct($n,$w)
     {
         $this->next = $n;
+        $this->winners = $w;
     }
 
     /**
@@ -40,7 +41,8 @@ class TimeUp implements ShouldBroadcastNow
     {
         //make array message and select randomly from that is case of null message as fallback
         return [
-            'next' => $this->next
+            'next' => $this->next,
+            'winners' => $this->winners
         ];
     }
 

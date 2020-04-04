@@ -6,7 +6,9 @@ use App\Events\AskSync;
 use App\Events\InPLM;
 use App\Events\Joined;
 use App\Events\Left;
+use App\Events\Round;
 use App\Events\SentText;
+use App\Events\SomeoneGuessed;
 use App\Events\Sync;
 use App\Events\TimeUp;
 use App\Events\UpdateCanvas;
@@ -101,7 +103,6 @@ class GameRoomController extends Controller
             'name' => 'required|string|max:25|min:2',
             'message' => 'required|string|max:230|min:2',
         ]);
-        // dd($validatedData);
         if ($validatedData['name'] != '' && $validatedData['message'] != '');
         broadcast(new SentText($validatedData['message'],$validatedData['name']));
     }
@@ -110,19 +111,8 @@ class GameRoomController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:25|min:2',
-            // 'line' => 'required|JSON',
         ]);
-        // dd($request->line);
-        broadcast(new UpdateCanvas($request->line, $validatedData['name']))->toOthers();
-    }
-
-    public function getWord(Type $var = null)
-    {
-    }
-
-    public function checkGuess(Type $var = null)
-    {
-        # code...
+        broadcast(new UpdateCanvas($request->type, $request->data, $validatedData['name']))->toOthers();
     }
 
     public function syncEvent(Request $request)
@@ -154,18 +144,23 @@ class GameRoomController extends Controller
 
     public function timeUpEvent(Request $request)
     {
-        broadcast(new TimeUp($request->next));
+        broadcast(new TimeUp($request->next,$request->guessed));
+    }
+    
+    public function roundEvent(Request $request)
+    {
+        broadcast(new Round());
     }
 
     public function wordEvent(){
         $response = Http::get('http://random-word-api.herokuapp.com/word?number=1');
-        broadcast(new Word($response->body()));
-        return response()->json($response->body());
+        $word = substr($response->body(),2,strlen($response->body())-4);
+        broadcast(new Word($word));
+        return response()->json($word);
     }
 
-    public function guessEvent(){
-        broadcast(new Word($response->body()));
-        return response()->json($response->body());
+    public function guessedEvent(Request $request){
+        broadcast(new SomeoneGuessed($request->name));
     }
 
 }

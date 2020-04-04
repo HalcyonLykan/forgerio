@@ -36,13 +36,20 @@ Route::prefix('gameRoom'/* .'s' */)->group(function () {
 	Route::get('/', 'GameRoomController@show');
 	Route::get('word', 'GameRoomController@wordEvent');
 	Route::post('/chat', 'GameRoomController@chatEvent');
+	
 	Route::post('/line', 'GameRoomController@canvasEvent');
+	Route::post('/clear', 'GameRoomController@canvasEvent');
+	Route::post('/fill', 'GameRoomController@canvasEvent');
+
 	Route::post('/joined', 'GameRoomController@joinedEvent');
 	Route::post('/left', 'GameRoomController@leftEvent');
+	
 	Route::post('/round', 'GameRoomController@roundEvent');
+	Route::post('/timeUp', 'GameRoomController@timeUpEvent');
+	
 	Route::post('/askSync', 'GameRoomController@askSyncEvent');
 	Route::post('/toSync', 'GameRoomController@syncEvent');
-	Route::post('/timeUp', 'GameRoomController@timeUpEvent');
+
 	Route::post('/guessed', 'GameRoomController@guessedEvent');
 });
 
