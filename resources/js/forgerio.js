@@ -86,7 +86,6 @@ $(document).ready(function () {
         });
         sketchpad.smoothing = 1.5;
         sketchpad.adaptiveStroke = false;
-        // sketchpad.weight = 10;
         sketchpad.recordStrokes = true;
         sketchpad.addEventListener('clean', () => {
             if (_isDrawing)
@@ -105,21 +104,21 @@ $(document).ready(function () {
 
     /* DEBUGGING CONLOGS */
     var socketId = Echo.socketId();
-    console.log('Socket ID: ', socketId);
-    console.log(_location);
-    setInterval(() => {
-        // console.log("usrs: ", _usrs);
-        console.log("isdrawing: ", _isDrawing);
-        // console.log("sketchpad: ", sketchpad);
-    }, 10000);
+    // console.log('Socket ID: ', socketId);
+    // console.log(_location);
+    // setInterval(() => {
+    //     // console.log("usrs: ", _usrs);
+    //     console.log("isdrawing: ", _isDrawing);
+    //     // console.log("sketchpad: ", sketchpad);
+    // }, 10000);
 
     /* SERVER CHANNELS AND EVENT HANDLERS */
     Echo.channel('laravel_database_room')
         .listen(".UpdateChat", (e) => {
-            console.log('UPDATECHAT: ', e);
+            // console.log('UPDATECHAT: ', e);
             $('#chatTextArea').html($('#chatTextArea').html() + e.name + ': ' + e.message + '\n')
         }).listen('.UpdateCanvas', (e) => { //breaks if 2 people somehow end up drawing at the same time ?...
-            console.log("UPDATECANVAS: ", e);
+            // console.log("UPDATECANVAS: ", e);
             switch (e['type']) {
                 case 'clear':
                     sketchpad.clear();
@@ -163,7 +162,7 @@ $(document).ready(function () {
         }).listen('.AskSync', (e) => {
             sync();
         }).listen('.SomeoneJoined', (e) => {
-            console.log('SOMEONEJOINED: ', e);
+            // console.log('SOMEONEJOINED: ', e);
             if (socketId !== e.socket) {
                 _usrs.push(e.name);
                 cleanUsrs();
@@ -172,7 +171,7 @@ $(document).ready(function () {
                 sync();
             }
         }).listen('.SomeoneLeft', (e) => {
-            console.log('SOMEONELEFT: ', e);
+            // console.log('SOMEONELEFT: ', e);
             _usrs = _usrs.filter(function (val) {
                 return val !== e.name;
             });
@@ -182,7 +181,7 @@ $(document).ready(function () {
             $('#chatTextArea').html($('#chatTextArea').html() + e.name + ' left\n')
             sync();
         }).listen('.SomeoneGuessed', (e) => {
-            console.log('SOMEONEGUESSED: ', e);
+            // console.log('SOMEONEGUESSED: ', e);
             $('#chatTextArea').html($('#chatTextArea').html() + e.name + ' guessed the word\n')
             if (e.name != _thisUser && _isDrawing) {
                 _guessed.push(e.name);
@@ -191,7 +190,7 @@ $(document).ready(function () {
                 }
             }
         }).listen('.TimeUp', (e) => {
-            console.log('TIMEUP: ', e);
+            // console.log('TIMEUP: ', e);
             clearInterval(_timeinterval);
             _timeinterval = null;
             if (e.winners) {
@@ -296,8 +295,11 @@ $(document).ready(function () {
     })
 
     $('#erase').click(() => {
-        if (_isDrawing)
-            sketchpad.mode = "erase";
+        if (_isDrawing){
+            // sketchpad.mode = "erase";
+            sketchpad.color = "#fff";
+            sketchpad.mode = "draw";
+        }
     })
 
     $('#pencil').click(() => {
@@ -370,7 +372,7 @@ $(document).ready(function () {
                 type: "get",
                 url: _location.origin + "/gameRoom/word", //@TODO: CHECK IF IT WORKS
                 success: function (response) {
-                    console.log(response);
+                    // console.log(response);
                     _word = response;
                 }
             });
@@ -476,7 +478,7 @@ $(document).ready(function () {
         $('#pencil').attr('disabled', false);
         $('#erase').attr('disabled', false);
         $('#fill').attr('disabled', false);
-        $('#html5colorpciker').attr('disabled', false);
+        $('#html5colorpicker').attr('disabled', false);
     }
 
     function disableSketch() {
@@ -488,10 +490,11 @@ $(document).ready(function () {
         $('#pencil').attr('disabled', true);
         $('#erase').attr('disabled', true);
         $('#fill').attr('disabled', true);
-        $('#html5colorpciker').attr('disabled', true);
+        $('#html5colorpicker').attr('disabled', true);
     }
 
     function changesketcpadcolor(event) {
+        console.log(event.target.value);
         if (_isDrawing) {
             sketchpad.color = event.target.value;
         }
